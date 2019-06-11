@@ -112,8 +112,11 @@ function main()
 		if (e.key == 'b') {
 			console.log('toggle breathing: ' + isPulse);
 			isPulse = ! isPulse;
+			pulseRatio = 0;
 		}
-		// else if (e.key == '')
+		else if (e.key == 'r') {
+			isRotate = ! isRotate;
+		}
 
 	});
 }
@@ -176,11 +179,12 @@ function poliScaleTranslate(ver_lines) {
 }
 
 let pulseRatio = 0;
-let pulseRate = 100
-let pulsePercentage = 0.2
-function incrementPulseRatio() {
-	pulseRatio += Math.PI / pulseRate;
-}
+let pulseRate = 100;
+let pulsePercentage = 0.2;
+
+let rotateRate = 5;
+let rotateAngle = 0;
+
 
 function render() {
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -198,7 +202,12 @@ function render() {
 
 
 	// calculate the current transformation matrix
-	let rotMatrix = rotateX(0);
+	//resolve user input on rotation
+	if (isRotate) {
+		rotateAngle += rotateRate
+	}
+	let rotMatrix = rotateX(rotateAngle);
+
 	let scaleTranslateFov = poliScaleTranslate(ver_lines);
 	let scaleMatrix = scaleTranslateFov[0];
 	let translateMatrix = scaleTranslateFov[1];
@@ -229,7 +238,7 @@ function render() {
 	let color = vec4(1.0,1.0,1.0,1.0);
 
 	if(isPulse) {
-		incrementPulseRatio();
+		pulseRatio += Math.PI / pulseRate;
 	}
 
 	for(let i = 0; i < pg_lines.length; i++) {
