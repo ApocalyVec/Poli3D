@@ -26,6 +26,10 @@ function main()
 				return line.trim().split(/(?: | )+/);
 			});
 
+			if(lines[0][0] != 'ply') {
+				throw "Invalid file type, not ply";
+			}
+
 			var ver_lines = lines.filter(function(line) {  // lines that hold the vertex coordinates
 				return line.length == 3 && !isNaN(line[0]);
 			}).map(function(line) {
@@ -137,8 +141,20 @@ function poliScaleTranslate(ver_lines) {
 		0,0,xyzScale,0,
 		0,0,0,1
 	);
+
+	// calculate the translate matrix
 	let translateMatrix = translate(-(xMax+xMin)/2, -(yMax+yMin)/2, -(zMax+zMin)/2);
 
+	//calculate the fov based on the extend
+	let opposite = Math.max((xyzScale * (xMax - xMin)), (xyzScale*(yMax - yMin)))/2;
+	console.log('opposite side is ' + opposite);
+	let adjacent = 1.5;
+	// Converts from radians to degrees.
+	Math.degrees = function(radians) {
+		return radians * 180 / Math.PI;
+	};
+	let fov = Math.degrees(Math.atan(opposite / adjacent));  // give 2 degree tolerance
+	console.log('Fov is ' + fov);
 	return [scaleMatrix, translateMatrix];
 }
 
@@ -157,9 +173,9 @@ function render(ver_lines, pg_lines) {
 	// }
 	// calculate the model matrix
 	let rotMatrix = rotateX(0);
-	let scaleTranslateM = poliScaleTranslate(ver_lines);
-	let scaleMatrix = scaleTranslateM[0];
-	let translateMatrix = scaleTranslateM[1];
+	let scaleTranslateFov = poliScaleTranslate(ver_lines);
+	let scaleMatrix = scaleTranslateFov[0];
+	let translateMatrix = scaleTranslateFov[1];
 
 	let ctMatrix = mult(mult(rotMatrix, scaleMatrix), translateMatrix);
 
@@ -167,7 +183,7 @@ function render(ver_lines, pg_lines) {
 	gl.uniformMatrix4fv(ctMatrixLoc, false, flatten(ctMatrix));
 
 	//calculate the view matrix
-	let eye = vec3(0.0, 0.0, 2.0);
+	let eye = vec3(0.0, 0.0, 1.5);
 	let at = vec3(0.0, 0.0, 0.0);
 	let up = vec3(0.0, 1.0, 0.0);
 	let viewMatrix = lookAt(eye, at, up);
@@ -175,8 +191,8 @@ function render(ver_lines, pg_lines) {
 	gl.uniformMatrix4fv(viewMatrixLoc, false, flatten(viewMatrix));
 
 	// calculate the projection matrix
-	let fovy = 30;
-	let thisProj = perspective(fovy, 1, .1, 100);
+	let fovy = 55.0; // opposite side is always 0.5, adjacent side is always 1.5 (how far the eye is from the mesh)
+	let thisProj = perspective(fovy, 1, 0.1, 100);
 	let projMatrix = gl.getUniformLocation(program, 'projMatrix');
 	gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
 
