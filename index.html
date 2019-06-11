@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <style>
+      .poliDiv {
+          margin: auto;
+          width: 80%;
+          border: 3px solid #73AD21;
+          padding: 10px;
+      }
+      canvas {
+          padding-left: 0;
+          padding-right: 0;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+      }
+  </style>
+    <meta charset="utf-8" />
+    <title>Poli3D</title>
+ 
+	<script id="vshader" type="x-shader/x-vertex">
+	
+	attribute vec4 vPosition;	
+	attribute vec4 vColor;
+	uniform float vPointSize;
+	uniform mat4 projMatrix;
+	uniform mat4 modelMatrix;
+	uniform mat4 viewMatrix;
+	varying vec4 fColor;
+	void main() {
+		gl_Position = projMatrix * viewMatrix * modelMatrix * vPosition;  // taken into account the view matrix
+		//gl_Position = projMatrix * modelMatrix * vPosition;
+		gl_PointSize = vPointSize;
+		fColor = vColor;
+  	}
+	</script>
+	
+	<script id="fshader" type="x-shader/x-fragment">
+	precision mediump float;
+	varying vec4 fColor;
+	void main() 
+	{
+		gl_FragColor = fColor;
+  	}
+	</script>
+	
+    <script src="lib/webgl-utils.js"></script>
+    <script src="lib/initShaders.js"></script>
+    <script src="lib/MV.js"></script>
+    
+    <script src="main.js"></script>
+
+  </head>
+ 
+  <body onload="main()">
+    <h1 style="text-align: center;">Poli3D</h1>
+
+    <div class="poliDiv" style="background-color:lightblue" >
+        <canvas id="webgl" width="400" height="400" >
+            Please use a browser that supports the "canvas" tag.
+        </canvas>
+    </div>
+
+    <div id = "uploadBox" style="text-align: center; margin: 30px" >
+        <input type="file">
+    </div>
+
+  </body>
+</html>
