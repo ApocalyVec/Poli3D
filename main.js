@@ -1,6 +1,9 @@
-//TODO calculate FOV through image extent
-//TODO make sure the aspect ratio is correct in the projection matrix
-// TODO calculate the eye position based on the extent
+/*
+* Key features:
+* 	the pulsing is using the sin function, those achieving a wave-like behavior (non-linear increment/decrement)
+*
+* */
+
 var gl;
 var program;
 
@@ -12,12 +15,17 @@ var alpha = 0;
 let vBuffer;
 let cBuffer;
 
+let ver_lines, pg_lines;
+
+// animation variables
+let isPulse;
+let isRotate;
+
 function main() 
 {
 	// element for reading files
 	const input = document.querySelector('input[type="file"]')
 	input.addEventListener('change', function(e) {
-		console.log(input.files);
 		const reader = new FileReader();
 		reader.readAsText(input.files[0]);
 
@@ -30,14 +38,14 @@ function main()
 				throw "Invalid file type, not ply";
 			}
 
-			var ver_lines = lines.filter(function(line) {  // lines that hold the vertex coordinates
+			ver_lines = lines.filter(function(line) {  // lines that hold the vertex coordinates
 				return line.length == 3 && !isNaN(line[0]);
 			}).map(function(line) {
 				return line.map(function(element) {
 					return parseFloat(element);
 				})
 			});
-			var pg_lines = lines.filter(function(line) {  // lines that hold the polygon info
+			pg_lines = lines.filter(function(line) {  // lines that hold the polygon info
 				return line.length == 4 && !isNaN(line[0]);
 			}).map(function(line) {
 				return line.map(function(element) {
@@ -45,7 +53,7 @@ function main()
 				})
 			});
 
-			render(ver_lines, pg_lines);
+			render();
 		}
 	});
 
@@ -97,6 +105,17 @@ function main()
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	gl.enable(gl.DEPTH_TEST);
+
+	isPulse = false;
+	window.addEventListener("keypress", function(e) {
+
+		if (e.key == 'b') {
+			console.log('toggle breathing: ' + isPulse);
+			isPulse = ! isPulse;
+		}
+		// else if (e.key == '')
+
+	});
 }
 
 function poliScaleTranslate(ver_lines) {
@@ -147,21 +166,26 @@ function poliScaleTranslate(ver_lines) {
 
 	//calculate the fov based on the extend
 	let opposite = Math.max((xyzScale * (xMax - xMin)), (xyzScale*(yMax - yMin)))/2;
-	console.log('opposite side is ' + opposite);
 	let adjacent = 1.5;
 	// Converts from radians to degrees.
 	Math.degrees = function(radians) {
 		return radians * 180 / Math.PI;
 	};
 	let fov = Math.degrees(Math.atan(opposite / adjacent));  // give 2 degree tolerance
-	console.log('Fov is ' + fov);
 	return [scaleMatrix, translateMatrix];
 }
 
-function render(ver_lines, pg_lines) {
+let pulseRatio = 0;
+let pulseRate = 100
+let pulsePercentage = 0.2
+function incrementPulseRatio() {
+	pulseRatio += Math.PI / pulseRate;
+}
+
+function render() {
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	gl.clearColor(0.0, 0.0, 0.0, 1.0);
-	gl.enable(gl.DEPTH_TEST);
+	// gl.clearColor(0.0, 0.0, 0.0, 1.0);
+	// gl.enable(gl.DEPTH_TEST);
 
 	// console.log('Ver lines are:');
 	// for(let i = 0; i < ver_lines.length; i++) {
@@ -171,11 +195,14 @@ function render(ver_lines, pg_lines) {
 	// for(let i = 0; i < pg_lines.length; i++) {
 	// 	console.log(pg_lines[i]);
 	// }
-	// calculate the model matrix
+
+
+	// calculate the current transformation matrix
 	let rotMatrix = rotateX(0);
 	let scaleTranslateFov = poliScaleTranslate(ver_lines);
 	let scaleMatrix = scaleTranslateFov[0];
 	let translateMatrix = scaleTranslateFov[1];
+
 
 	let ctMatrix = mult(mult(rotMatrix, scaleMatrix), translateMatrix);
 
@@ -199,16 +226,38 @@ function render(ver_lines, pg_lines) {
 	// draw the triangles
 	points = [];
 	colors = [];
+	let color = vec4(1.0,1.0,1.0,1.0);
+
+	if(isPulse) {
+		incrementPulseRatio();
+	}
+
 	for(let i = 0; i < pg_lines.length; i++) {
-		color = vec4(1.0,1.0,1.0,1.0);
 
 		let first = ver_lines[pg_lines[i][1]];
 		let second = ver_lines[pg_lines[i][2]];
 		let third = ver_lines[pg_lines[i][3]];
 
-		points.push(vec4(first[0], first[1], first[2]));
-		points.push(vec4(second[0], second[1], second[2]));
-		points.push(vec4(third[0], third[1], third[2]));
+		// resolve animation
+		if(isPulse) {
+			let v1 = vec4(first[0], first[1], first[2], 1.0);
+			let v2 = vec4(second[0], second[1], second[2], 1.0);
+			let v3 = vec4(third[0], third[1], third[2], 1.0);
+
+			let norm = newell(v1, v2, v3);
+			// console.log('Norm is: ' + norm + ', Pulse ratio is ' + pRatio);
+			let pulse_co = (Math.abs(pulsePercentage * Math.sin(pulseRatio))) / scaleMatrix[0][0];  // divide by the scale to ensure all meshes pulse uniformly at given pulse percentage (0.2)
+			let pulseTranslateM = translate(pulse_co * norm[0], pulse_co * norm[1], pulse_co * norm[2]);
+
+			points.push(mult(pulseTranslateM, v1));
+			points.push(mult(pulseTranslateM, v2));
+			points.push(mult(pulseTranslateM, v3));
+		}
+		else {
+			points.push(vec4(first[0], first[1], first[2], 1.0));
+			points.push(vec4(second[0], second[1], second[2], 1.0));
+			points.push(vec4(third[0], third[1], third[2], 1.0));
+		}
 
 		colors.push(color);
 		colors.push(color);
@@ -225,6 +274,31 @@ function render(ver_lines, pg_lines) {
 	for(let i = 0; i < points.length-2; i += 3) {
 		gl.drawArrays(gl.LINE_LOOP, i, 3);
 	}
+
+	requestAnimationFrame(render);
+}
+
+function newell(v1, v2, v3) {
+	/*
+	* finds the surface normal for v1, v2, and v3
+	* return the surface normal as a unit vector
+	* */
+
+	let n1, n2, n3; //
+
+	n1 = (v1[1] - v2[1]) * (v1[2] + v2[2]) +
+		(v2[1] - v3[1]) * (v2[2] + v3[2]) +
+		(v3[1] - v1[1]) * (v3[2] + v1[2]);
+
+	n2 = (v1[2] - v2[2]) * (v1[0] + v2[0]) +
+		(v2[2] - v3[2]) * (v2[0] + v3[0]) +
+		(v3[2] - v1[2]) * (v3[0] + v1[0]);
+
+	n3 = (v1[0] - v2[0]) * (v1[1] + v2[1]) +
+		(v2[0] - v3[0]) * (v2[1] + v3[1]) +
+		(v3[0] - v1[0]) * (v3[1] + v1[1]);
+
+	return normalize(vec3(n1,n2,n3), false);
 }
 
 // function render() {
