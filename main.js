@@ -1,10 +1,6 @@
-/*
- * Some comments quoted from WebGL Programming Guide
- * by Matsuda and Lea, 1st edition.
- * 
- * @author Joshua Cuneo
- */
-
+//TODO calculate FOV through image extent
+//TODO make sure the aspect ratio is correct in the projection matrix
+// TODO calculate the eye position based on the extent
 var gl;
 var program;
 
@@ -179,7 +175,7 @@ function render(ver_lines, pg_lines) {
 	gl.uniformMatrix4fv(viewMatrixLoc, false, flatten(viewMatrix));
 
 	// calculate the projection matrix
-	let fovy = 45;
+	let fovy = 30;
 	let thisProj = perspective(fovy, 1, .1, 100);
 	let projMatrix = gl.getUniformLocation(program, 'projMatrix');
 	gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
