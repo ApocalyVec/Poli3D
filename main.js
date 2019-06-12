@@ -4,6 +4,9 @@
 *
 * */
 
+// TODO shearing along x axis
+// TODO draw the face normal
+
 var gl;
 var program;
 
@@ -121,7 +124,6 @@ function main()
 		if (e.key == 'b') {
 			console.log('toggle breathing: ' + isPulse);
 			isPulse = ! isPulse;
-			pulseRatio = 0;
 		}
 		else if (e.key == 'r') {
 			isRotate = ! isRotate;
@@ -304,25 +306,20 @@ function render() {
 		let third = ver_lines[pg_lines[i][3]];
 
 		// resolve animation
-		if(isPulse) {
-			let v1 = vec4(first[0], first[1], first[2], 1.0);
-			let v2 = vec4(second[0], second[1], second[2], 1.0);
-			let v3 = vec4(third[0], third[1], third[2], 1.0);
 
-			let norm = newell(v1, v2, v3);
-			// console.log('Norm is: ' + norm + ', Pulse ratio is ' + pRatio);
-			let pulse_co = (Math.abs(pulsePercentage * Math.sin(pulseRatio))) / scaleMatrix[0][0];  // divide by the scale to ensure all meshes pulse uniformly at given pulse percentage (0.2)
-			let pulseTranslateM = translate(pulse_co * norm[0], pulse_co * norm[1], pulse_co * norm[2]);
+		let v1 = vec4(first[0], first[1], first[2], 1.0);
+		let v2 = vec4(second[0], second[1], second[2], 1.0);
+		let v3 = vec4(third[0], third[1], third[2], 1.0);
 
-			points.push(mult(pulseTranslateM, v1));
-			points.push(mult(pulseTranslateM, v2));
-			points.push(mult(pulseTranslateM, v3));
-		}
-		else {
-			points.push(vec4(first[0], first[1], first[2], 1.0));
-			points.push(vec4(second[0], second[1], second[2], 1.0));
-			points.push(vec4(third[0], third[1], third[2], 1.0));
-		}
+		let norm = newell(v1, v2, v3);
+		// console.log('Norm is: ' + norm + ', Pulse ratio is ' + pRatio);
+		let pulse_co = (Math.abs(pulsePercentage * Math.sin(pulseRatio))) / scaleMatrix[0][0];  // divide by the scale to ensure all meshes pulse uniformly at given pulse percentage (0.2)
+		let pulseTranslateM = translate(pulse_co * norm[0], pulse_co * norm[1], pulse_co * norm[2]);
+
+		points.push(mult(pulseTranslateM, v1));
+		points.push(mult(pulseTranslateM, v2));
+		points.push(mult(pulseTranslateM, v3));
+
 
 		colors.push(color);
 		colors.push(color);

@@ -22,4 +22,4 @@ A for toggling moving along the Negative Z axis
 ##Features
 * the pulsing is using the sin function, those achieving a wave-like behavior (non-linear increment/decrement)
 
-##Limitations
+##Structure of the Program
