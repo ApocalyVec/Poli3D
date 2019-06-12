@@ -18,8 +18,17 @@ let cBuffer;
 let ver_lines, pg_lines;
 
 // animation variables
-let isPulse;
-let isRotate;
+let isPulse = false;
+let isRotate = false;
+
+let isMovingX = false;
+let isPosX = 1;  // is the mesh translating along the positive x axis
+
+let isMovingY = false;
+let isPosY = 1;
+
+let isMovingZ = false;
+let isPosZ = 1;
 
 function main() 
 {
@@ -118,7 +127,54 @@ function main()
 			isRotate = ! isRotate;
 		}
 
+		else if (e.key == 'x') {
+			isMovingX = ! isMovingX;
+			isPosX = 1;
+		}
+		else if (e.key == 'c') {
+			isMovingX = ! isMovingX;
+			isPosX = -1;
+		}
+
+		else if (e.key == 'y') {
+			isMovingY = ! isMovingY;
+			isPosY = 1;
+		}
+		else if (e.key == 'u') {
+			isMovingY = ! isMovingY;
+			isPosY = -1;
+		}
+
+		else if (e.key == 'z') {
+			isMovingZ = ! isMovingZ;
+			isPosZ = 1;
+		}
+		else if (e.key == 'a') {
+			isMovingZ = ! isMovingZ;
+			isPosZ = -1;
+		}
+
 	});
+}
+let transRate = 0.01
+let transX = 0;
+let transY = 0;
+let transZ = 0;
+
+function getUserTranslate() {
+
+	if(isMovingX) {
+		transX += isPosX * transRate;
+	}
+	if(isMovingY) {
+		transY += isPosY * transRate;
+	}
+	if(isMovingZ) {
+		transZ += isPosZ * transRate;
+	}
+
+
+	return translate(transX, transY, transZ);
 }
 
 function poliScaleTranslate(ver_lines) {
@@ -210,10 +266,10 @@ function render() {
 
 	let scaleTranslateFov = poliScaleTranslate(ver_lines);
 	let scaleMatrix = scaleTranslateFov[0];
-	let translateMatrix = scaleTranslateFov[1];
+	let offsetTranslateMatrix = scaleTranslateFov[1];
+	let userTranslateMatrix = getUserTranslate();
 
-
-	let ctMatrix = mult(mult(rotMatrix, scaleMatrix), translateMatrix);
+	let ctMatrix = mult(userTranslateMatrix, mult(mult(rotMatrix, scaleMatrix), offsetTranslateMatrix));
 
 	let ctMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
 	gl.uniformMatrix4fv(ctMatrixLoc, false, flatten(ctMatrix));
