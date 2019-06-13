@@ -57,6 +57,9 @@ function main()
 		reader.readAsText(input.files[0]);
 
 		reader.onload = function() {
+			state.angle.x = 0;
+			state.angle.y = 0;
+
 			var lines = reader.result.split('\n').map(function(line) {
 				return line.trim().split(/(?: | )+/);
 			});
