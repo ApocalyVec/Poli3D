@@ -21,5 +21,6 @@ A for toggling moving along the Negative Z axis
 
 ##Features
 * the pulsing is using the sin function, those achieving a wave-like behavior (non-linear increment/decrement)
+* use mouse to drag on canvas to rotate the mesh 
 
 ##Structure of the Program
