@@ -33,6 +33,21 @@ let isPosY = 1;
 let isMovingZ = false;
 let isPosZ = 1;
 
+let state = {
+	mouse: {
+		lastX:-1,
+		lastY:-1
+	},
+
+	angle: { // updated through mouse event
+		x: 0,
+		y:0
+	}
+};
+
+//html elements
+var canvas;
+
 function main() 
 {
 	// element for reading files
@@ -70,7 +85,7 @@ function main()
 	});
 
 	// Retrieve <canvas> element
-	var canvas = document.getElementById('webgl');
+	canvas = document.getElementById('webgl');
 
 	// Get the rendering context for WebGL
 	gl = WebGLUtils.setupWebGL(canvas, undefined);
@@ -155,13 +170,46 @@ function main()
 			isMovingZ = ! isMovingZ;
 			isPosZ = -1;
 		}
-
 	});
+
+	canvas.addEventListener('mousedown', canvasMouseDown);
+	canvas.addEventListener('mouseup', canvasMouseUp);
+	canvas.addEventListener('mousemove', canvasMouseMove);
+
 }
+let dragging = false;
+
+// mouse event callbacks
+function canvasMouseDown(e){
+	state.mouse.lastX = e.clientX;
+	state.mouse.lastY = e.clientY;
+
+	dragging = true;
+}
+
+
+function canvasMouseMove(e){
+	if (dragging) {
+		let curX = e.clientX;
+		let curY = e.clientY;
+
+		let ratio = 10/canvas.height;
+		state.angle.x = state.angle.x + ratio * (curX - state.mouse.lastX);
+		state.angle.y = state.angle.y + ratio * (curY - state.mouse.lastY);
+
+		// console.log('angle [x,y]: ' + state.angle.x + ', ' + state.angle.y);
+	}
+}
+
+function canvasMouseUp(e){
+	dragging = false;
+}
+
 let transRate = 0.01
 let transX = 0;
 let transY = 0;
 let transZ = 0;
+
 
 function getUserTranslate() {
 
@@ -264,7 +312,9 @@ function render() {
 	if (isRotate) {
 		rotateAngle += rotateRate
 	}
-	let rotMatrix = rotateX(rotateAngle);
+	let rotMatrix = mult(rotateY(state.angle.x), mult(rotateX(rotateAngle), rotateX(state.angle.y)));
+
+
 
 	let scaleTranslateFov = poliScaleTranslate(ver_lines);
 	let scaleMatrix = scaleTranslateFov[0];
