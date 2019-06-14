@@ -12,8 +12,8 @@ var program;
 
 var points;
 var colors;
-var theta = 0;
-var alpha = 0;
+
+let norm_length = 0.1;
 
 let vBuffer;
 let cBuffer;
@@ -23,6 +23,7 @@ let ver_lines, pg_lines;
 // animation variables
 let isPulse = false;
 let isRotate = false;
+let isShowNorm = false;
 
 let isMovingX = false;
 let isPosX = 1;  // is the mesh translating along the positive x axis
@@ -140,7 +141,7 @@ function main()
 	window.addEventListener("keypress", function(e) {
 
 		if (e.key == 'b') {
-			console.log('toggle breathing: ' + isPulse);
+			// console.log('toggle breathing: ' + isPulse);
 			isPulse = ! isPulse;
 		}
 		else if (e.key == 'r') {
@@ -172,6 +173,10 @@ function main()
 		else if (e.key == 'a') {
 			isMovingZ = ! isMovingZ;
 			isPosZ = -1;
+		}
+		else if (e.key == 'n') {
+			// console.log('Toggle showing normal: ' + isShowNorm);
+			isShowNorm = ! isShowNorm;
 		}
 	});
 
@@ -208,7 +213,7 @@ function canvasMouseUp(e){
 	dragging = false;
 }
 
-let transRate = 0.01
+let transRate = 0.01;
 let transX = 0;
 let transY = 0;
 let transZ = 0;
@@ -347,10 +352,13 @@ function render() {
 	points = [];
 	colors = [];
 	let color = vec4(1.0,1.0,1.0,1.0);
+	let normColor = vec4(1.0, 0.0, 0.0, 1.0);
 
 	if(isPulse) {
 		pulseRatio += Math.PI / pulseRate;
 	}
+
+	let normRatio = norm_length / scaleMatrix[0][0];
 
 	for(let i = 0; i < pg_lines.length; i++) {
 
@@ -373,10 +381,26 @@ function render() {
 		points.push(mult(pulseTranslateM, v2));
 		points.push(mult(pulseTranslateM, v3));
 
+		colors.push(color);
+		colors.push(color);
+		colors.push(color);
 
-		colors.push(color);
-		colors.push(color);
-		colors.push(color);
+		// draw the surface normals
+		if (isShowNorm) {
+			let center = centroid(v1, v2, v3);
+			let normPoint = vec4(normRatio*norm[0], normRatio*norm[1], normRatio*norm[2], 1.0);
+
+			let normTranslateM = translate(center[0], center[1], center[2]);
+			normPoint = mult(normTranslateM, normPoint);
+
+			points.push(normPoint);
+			points.push(center);
+			points.push(center);
+			colors.push(normColor);
+			colors.push(normColor);
+			colors.push(normColor);
+
+		}
 	}
 
 	// bind the vertex and color buffer
@@ -391,6 +415,17 @@ function render() {
 	}
 
 	requestAnimationFrame(render);
+}
+
+function centroid(a, b, c) {
+	/*
+	* calculate the centroid of the given triangle
+	*/
+	let ox = (a[0] + b[0] + c[0])/3;
+	let oy = (a[1] + b[1] + c[1])/3;
+	let oz = (a[2] + b[2] + c[2])/3;
+
+	return vec4(ox, oy, oz, 1.0);
 }
 
 function newell(v1, v2, v3) {
