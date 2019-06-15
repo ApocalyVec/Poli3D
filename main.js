@@ -1,11 +1,10 @@
 /*
-* Key features:
-* 	the pulsing is using the sin function, those achieving a wave-like behavior (non-linear increment/decrement)
-*
+* Extra Feature
+* the pulsing is using the sin function, those achieving a wave-like behavior (non-linear increment/decrement)
+* use mouse to drag on canvas to rotate the mesh
+* Press N key to display the surface normals of the mesh
+* Shear Slider to apply shear on all directions
 * */
-
-// TODO shearing along x axis
-// TODO draw the face normal
 
 var gl;
 var program;
