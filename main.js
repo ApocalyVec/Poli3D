@@ -13,7 +13,7 @@ var program;
 var points;
 var colors;
 
-let norm_length = 0.1;
+let norm_length = 0.05;
 
 let vBuffer;
 let cBuffer;
@@ -43,11 +43,18 @@ let state = {
 	angle: { // updated through mouse event
 		x: 0,
 		y:0
-	}
+	},
 };
 
 //html elements
 var canvas;
+let shearSliderYX;
+let shearSliderXY;
+let shearSliderXZ;
+let shearSliderZX;
+let shearSliderYZ;
+let shearSliderZY;
+
 
 function main() 
 {
@@ -65,19 +72,19 @@ function main()
 				return line.trim().split(/(?: | )+/);
 			});
 
-			if(lines[0][0] != 'ply') {
+			if(lines[0][0] !== 'ply') {
 				throw "Invalid file type, not ply";
 			}
 
 			ver_lines = lines.filter(function(line) {  // lines that hold the vertex coordinates
-				return line.length == 3 && !isNaN(line[0]);
+				return line.length === 3 && !isNaN(line[0]);
 			}).map(function(line) {
 				return line.map(function(element) {
 					return parseFloat(element);
 				})
 			});
 			pg_lines = lines.filter(function(line) {  // lines that hold the polygon info
-				return line.length == 4 && !isNaN(line[0]);
+				return line.length === 4 && !isNaN(line[0]);
 			}).map(function(line) {
 				return line.map(function(element) {
 					return parseFloat(element);
@@ -88,8 +95,18 @@ function main()
 		}
 	});
 
-	// Retrieve <canvas> element
+	// Retrieve HTML element
 	canvas = document.getElementById('webgl');
+	shearSliderYX = document.getElementById('shearSliderYX');
+	shearSliderXY = document.getElementById('shearSliderXY');
+	shearSliderZX = document.getElementById('shearSliderZX');
+	shearSliderXZ = document.getElementById('shearSliderXZ');
+	shearSliderYZ = document.getElementById('shearSliderYZ');
+	shearSliderZY = document.getElementById('shearSliderZY');
+
+
+	// // shear callbacks
+	// shearSliderYX.oninput = shearXY;
 
 	// Get the rendering context for WebGL
 	gl = WebGLUtils.setupWebGL(canvas, undefined);
@@ -140,41 +157,41 @@ function main()
 	isPulse = false;
 	window.addEventListener("keypress", function(e) {
 
-		if (e.key == 'b') {
+		if (e.key === 'b') {
 			// console.log('toggle breathing: ' + isPulse);
 			isPulse = ! isPulse;
 		}
-		else if (e.key == 'r') {
+		else if (e.key === 'r') {
 			isRotate = ! isRotate;
 		}
 
-		else if (e.key == 'x') {
+		else if (e.key === 'x') {
 			isMovingX = ! isMovingX;
 			isPosX = 1;
 		}
-		else if (e.key == 'c') {
+		else if (e.key === 'c') {
 			isMovingX = ! isMovingX;
 			isPosX = -1;
 		}
 
-		else if (e.key == 'y') {
+		else if (e.key === 'y') {
 			isMovingY = ! isMovingY;
 			isPosY = 1;
 		}
-		else if (e.key == 'u') {
+		else if (e.key === 'u') {
 			isMovingY = ! isMovingY;
 			isPosY = -1;
 		}
 
-		else if (e.key == 'z') {
+		else if (e.key === 'z') {
 			isMovingZ = ! isMovingZ;
 			isPosZ = 1;
 		}
-		else if (e.key == 'a') {
+		else if (e.key === 'a') {
 			isMovingZ = ! isMovingZ;
 			isPosZ = -1;
 		}
-		else if (e.key == 'n') {
+		else if (e.key === 'n') {
 			// console.log('Toggle showing normal: ' + isShowNorm);
 			isShowNorm = ! isShowNorm;
 		}
@@ -282,13 +299,13 @@ function poliScaleTranslate(ver_lines) {
 	let translateMatrix = translate(-(xMax+xMin)/2, -(yMax+yMin)/2, -(zMax+zMin)/2);
 
 	//calculate the fov based on the extend
-	let opposite = Math.max((xyzScale * (xMax - xMin)), (xyzScale*(yMax - yMin)))/2;
-	let adjacent = 1.5;
-	// Converts from radians to degrees.
-	Math.degrees = function(radians) {
-		return radians * 180 / Math.PI;
-	};
-	let fov = Math.degrees(Math.atan(opposite / adjacent));  // give 2 degree tolerance
+	// let opposite = Math.max((xyzScale * (xMax - xMin)), (xyzScale*(yMax - yMin)))/2;
+	// let adjacent = 1.5;
+	// // Converts from radians to degrees.
+	// Math.degrees = function(radians) {
+	// 	return radians * 180 / Math.PI;
+	// };
+	// let fov = Math.degrees(Math.atan(opposite / adjacent));  // give 2 degree tolerance
 	return [scaleMatrix, translateMatrix];
 }
 
@@ -321,15 +338,19 @@ function render() {
 		rotateAngle += rotateRate
 	}
 	let rotMatrix = mult(rotateY(state.angle.x), mult(rotateX(rotateAngle), rotateX(state.angle.y)));
-
-
-
 	let scaleTranslateFov = poliScaleTranslate(ver_lines);
 	let scaleMatrix = scaleTranslateFov[0];
 	let offsetTranslateMatrix = scaleTranslateFov[1];
 	let userTranslateMatrix = getUserTranslate();
 
-	let ctMatrix = mult(userTranslateMatrix, mult(mult(rotMatrix, scaleMatrix), offsetTranslateMatrix));
+	let shearM = mat4(1, shearSliderYX.value/100, shearSliderZX.value/100, 0,
+		shearSliderXY.value/100, 1, shearSliderZY.value/100, 0,
+		shearSliderXZ.value/100, shearSliderYZ.value/100, 1, 0,
+					0, 0,0,1);
+
+	let ctMatrix = mult(userTranslateMatrix, mult(mult(shearM, mult(rotMatrix, scaleMatrix)), offsetTranslateMatrix));
+
+	// let ctMatrix = mult(userTranslateMatrix, mult(mult(rotMatrix, scaleMatrix), offsetTranslateMatrix));
 
 	let ctMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
 	gl.uniformMatrix4fv(ctMatrixLoc, false, flatten(ctMatrix));
@@ -450,31 +471,3 @@ function newell(v1, v2, v3) {
 
 	return normalize(vec3(n1,n2,n3), false);
 }
-
-// function render() {
-// 	var rotMatrix = rotateX(0);
-// 	var translateMatrix = translate(0, 0, 0);
-// 	var ctMatrix = mult(translateMatrix, rotMatrix);
-//
-// 	theta += 0.5;
-// 	alpha += 0.005;
-//
-// 	var eye = vec3(3.0, 3.0, 3.0);
-// 	var at = vec3(0.0, 0.0, 0.0);
-// 	var up = vec3(0.0, 1.0, 0.0);
-//
-// 	var viewMatrix = lookAt(eye, at, up);
-// 	var viewMatrixLoc = gl.getUniformLocation(program, "viewMatrix");
-// 	gl.uniformMatrix4fv(viewMatrixLoc, false, flatten(viewMatrix));
-//
-// 	var ctMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
-// 	gl.uniformMatrix4fv(ctMatrixLoc, false, flatten(ctMatrix));
-//
-// 	// also clear the depth buffer bit
-// 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-//
-// 	gl.drawArrays(gl.TRIANGLES, 0, points.length);
-//
-// 	// id = requestAnimationFrame(render);
-//
-// }

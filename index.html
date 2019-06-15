@@ -15,6 +15,36 @@
           margin-right: auto;
           display: block;
       }
+      .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 25px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 0.7;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+      }
+
+      .slider:hover {
+        opacity: 1;
+      }
+
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        background: #4CAF50;
+        cursor: pointer;
+      }
+
+      .slider::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        background: #4CAF50;
+        cursor: pointer;
+      }
   </style>
     <meta charset="utf-8" />
     <title>Poli3D</title>
@@ -57,13 +87,32 @@
     <h1 style="text-align: center;">Poli3D</h1>
 
     <div class="poliDiv" style="background-color:lightblue" >
-        <canvas id="webgl" width="720" height="720" >
+        <canvas id="webgl" width="512" height="512" >
             Please use a browser that supports the "canvas" tag.
         </canvas>
     </div>
 
     <div id = "uploadBox" style="text-align: center; margin: 30px" >
         <input type="file">
+    </div>
+    <div id = "shearSliderContainer">
+      <input type="range" min="0" max="100" value="0" class="slider" id="shearSliderYX" name="shearSliderYX">
+      <label for="shearSliderYX">Shear along Y-X</label>
+
+      <input type="range" min="0" max="100" value="0" class="slider" id="shearSliderXY" name="shearSliderXY">
+      <label for="shearSliderXY">Shear along X-Y</label>
+
+      <input type="range" min="0" max="100" value="0" class="slider" id="shearSliderZX" name="shearSliderZX">
+      <label for="shearSliderZX">Shear along Z-X</label>
+
+      <input type="range" min="0" max="100" value="0" class="slider" id="shearSliderXZ" name="shearSliderXZ">
+      <label for="shearSliderXZ">Shear along X-Z</label>
+
+      <input type="range" min="0" max="100" value="0" class="slider" id="shearSliderYZ" name="shearSliderYZ">
+      <label for="shearSliderYZ">Shear along Y-Z</label>
+
+      <input type="range" min="0" max="100" value="0" class="slider" id="shearSliderZY" name="shearSliderZY">
+      <label for="shearSliderZY">Shear along Z-Y</label>
     </div>
 
   </body>

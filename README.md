@@ -23,10 +23,13 @@ N for displaying the surface normals for all the faces of the mesh
 
 Drag over the canvas to rotate the mesh
 
+Use the Shear Slider to shear the mesh along any axis
+
 ##Extra Features
 * the pulsing is using the sin function, those achieving a wave-like behavior (non-linear increment/decrement)
 * use mouse to drag on canvas to rotate the mesh 
 * Press N key to display the surface normals of the mesh
+* Shear Slider to apply shear on all directions
 
 ##Structure of the Program
 This program implements Webgl as a 3D view application. 
@@ -61,3 +64,5 @@ Moreover, to make the surface normal start at the center of each triangle and of
 * scales the normalized surface normal point by the inverse of the model scale vector, then scales by the pre-defined 
 length of the normal line (=0.1). In doing so, we ensure that the surface normal for different mesh will all have a 
 consistent length.
+It is worth noting that the drawn normals does not interact with the pulsing. [this is a feature!]
+####Shearing
