@@ -1,6 +1,5 @@
-# Polibook
-This program implements WebGL in a 2D polibook .
-
+# Poli3D
+This program implements WebGL to view a .ply file. It offers a variety of ways to interact with the drawn mesh.
 
 ## User commands
 B for Pulsing
@@ -40,16 +39,30 @@ map and filter function to optimize performance. The two resulting variable from
 * ver_lines: list of vertex information, each entry contains the coordinates of all the vertices as a list of floats
 * pg_lines: list of polygon information, each entry contains the index of the vertices that make up a polygon. The entries are list of integers.
 
-###Render
+###Render and Offset
 Then the program calls render to process and draw the polygons.
-
-###User Integrations
+To retain viewable scale for any mesh, the function 'poliScaleTranslate' is used. It returns a scale and a translate 
+offset matrix. The scale matrix scales the mesh uniformly along all axis by the maximum length of the mesh (x, y,or z).
+The translate offset is to ensure the mesh is centered in the scene; it translates x by -(xMax+xMin)/2, y by -(yMax+yMin)/2,
+and z by -(zMax+zMin)/2
+###User Interactions
 The user can interact with the drawn mesh in various ways. All the user inputs are handled by either window or html 
 element listeners. The effect of the inputs (i.e. rotate,  translate) are processed in the render call.
 ####Rotate
+User may press the R key to toggle on and off constant rotation along the X axis. This rotate matrix is initialized in 
+the render call and apply into the current view (CT) matrix, which is then parsed to the vertex shader and multiplied with the all the
+mesh vertices
 ####Translate
+User may press the six keys specified in 'User Commands' to translate the mesh along a specific axis. The user translation
+matrix, like the rotate and offset matrices, is initialized in the render call and multiplied into the CT matrix.
 ####Pulse
+To toggle breathing (pulsing), user may press the B key. Once enabled, every time the render function is called. It translates
+all the triangles that make up the mesh along their individual surface normals. The amount it translates changes with every
+call on render. This amount varies through -1 to 1 and is process through sinusoid to give the effect of wave-like breathing.
 ####Drag to Rotate
+The user can rotate the mesh by drag the mouse over the canvas. The mouse event is processed to get the current cursor
+location and the last cursor location. Those information are used in creating the rotate matrix in render and later multiplied
+into the CT matrix.
 ####Drawing Surface Normal
 If display normal is toggled on, in addition to pushing the mesh vertices to the GPU buffer, we push an additional
 three points for every triangle. Those three points, when drawn as a line_loop, will be the surface normal for
@@ -66,3 +79,13 @@ length of the normal line (=0.1). In doing so, we ensure that the surface normal
 consistent length.
 It is worth noting that the drawn normals does not interact with the pulsing. [this is a feature!]
 ####Shearing
+In addition to the rotate, scale and translate matrix. Render process an addition Shear Matrix, defined as follows:
+
+               1,   Syx,  Szx,  0,
+               Sxy,     1,  Szy,  0,
+               Sxz,   Syz,   1,   0,
+                 0,     0,   0,   1  
+                 
+ Where the S-headed variables are the amount of shearing along a specified axis in the given direction (i.e. Syz is the amount
+ of shear along the y-to-z axis). This shear matrix gets those amounts of shearing from the Shear Sliders. The shear
+ matrix is then applied into the CT matrix along with all other model transformation matrices.
